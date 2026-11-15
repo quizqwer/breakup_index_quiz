@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>脫單指數測驗</title>
+<style>
+  :root{
+    --bg:#f5f3ee;
+    --surface:#ffffff;
+    --surface-2:#eae6dd;
+    --ink:#211f1c;
+    --ink-soft:#6b665d;
+    --line:rgba(33,31,28,0.12);
+    --accent:#3c6e63;
+    --accent-soft:rgba(60,110,99,0.12);
+    --accent-strong:#2c5048;
+    --gold:#a98f4b;
+    --track:#eae6dd;
+    --tier1:#d6e3dc;
+    --tier2:#b9d2c5;
+    --tier3:#9bc0b0;
+    --tier4:#6fa08f;
+    --tier5:#3c6e63;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#17181a;
+      --surface:#212224;
+      --surface-2:#2a2b2d;
+      --ink:#ece9e2;
+      --ink-soft:#a7a39a;
+      --line:rgba(236,233,226,0.12);
+      --accent:#6fb3a3;
+      --accent-soft:rgba(111,179,163,0.16);
+      --accent-strong:#8fcabc;
+      --gold:#d1b872;
+      --track:#2a2b2d;
+      --tier1:#2a3f3a;
+      --tier2:#35594f;
+      --tier3:#437566;
+      --tier4:#58967f;
+      --tier5:#6fb3a3;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#17181a;
+    --surface:#212224;
+    --surface-2:#2a2b2d;
+    --ink:#ece9e2;
+    --ink-soft:#a7a39a;
+    --line:rgba(236,233,226,0.12);
+    --accent:#6fb3a3;
+    --accent-soft:rgba(111,179,163,0.16);
+    --accent-strong:#8fcabc;
+    --gold:#d1b872;
+    --track:#2a2b2d;
+    --tier1:#2a3f3a;
+    --tier2:#35594f;
+    --tier3:#437566;
+    --tier4:#58967f;
+    --tier5:#6fb3a3;
+  }
+  *{ box-sizing:border-box; }
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Microsoft JhengHei","Noto Sans TC",sans-serif;
+    line-height:1.7;
+    padding:28px 16px 56px;
+  }
+  .wrap{ max-width:460px; margin:0 auto; }
+  .stage{ display:none; }
+  .stage.active{ display:block; animation:fadeIn .25s ease; }
+  @keyframes fadeIn{ from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);} }
+
+  .eyebrow{
+    font-size:13px; font-weight:700; letter-spacing:.08em; color:var(--accent-strong);
+    margin:0 0 10px;
+  }
+  h1{ font-size:26px; line-height:1.4; margin:0 0 14px; }
+  p.lede{ color:var(--ink-soft); font-size:15px; margin:0 0 14px; }
+  p.lede-note{ margin:14px 0 28px; font-size:13.5px; line-height:1.75; }
+
+  .intro-list{ list-style:none; margin:0 0 16px; padding:0; }
+  .intro-list li{
+    display:grid; grid-template-columns:22px 96px 1fr; column-gap:10px; align-items:start;
+    padding:11px 0; border-bottom:1px solid var(--line);
+  }
+  .intro-list li:first-child{ padding-top:0; }
+  .intro-list li:last-child{ border-bottom:none; padding-bottom:0; }
+  .li-num{ font-size:12px; font-weight:700; color:var(--gold); line-height:1.65; letter-spacing:.02em; }
+  .li-label{ font-size:14.5px; font-weight:700; color:var(--accent-strong); line-height:1.65; }
+  .li-desc{ font-size:14px; color:var(--ink-soft); line-height:1.65; }
+
+  .card{
+    background:var(--surface); border-radius:20px; padding:22px 20px;
+    box-shadow:0 18px 40px -28px rgba(0,0,0,0.35); margin-bottom:16px;
+  }
+
+  .start-btn, .option-btn, .primary-btn{
+    display:block; width:100%; text-align:left; border:none; cursor:pointer;
+    font-family:inherit; font-size:15.5px; color:var(--ink);
+    background:var(--surface); border:1px solid var(--line);
+    border-radius:14px; padding:15px 16px; margin-bottom:10px;
+    transition:border-color .15s, background .15s, transform .1s;
+  }
+  .option-btn:hover{ border-color:var(--accent); background:var(--accent-soft); }
+  .option-btn:active{ transform:scale(0.99); }
+  .option-btn.option-selected{ border-color:var(--accent); background:var(--accent-soft); font-weight:700; }
+
+  .start-btn, .primary-btn{
+    background:var(--accent); color:#fff; text-align:center; font-weight:700;
+    border:none; font-size:16px; padding:16px;
+  }
+  .start-btn:hover, .primary-btn:hover{ background:var(--accent-strong); }
+  .secondary-btn{
+    display:block; width:100%; text-align:center; background:transparent;
+    border:none; color:var(--ink-soft); font-size:14px; padding:10px; cursor:pointer;
+    text-decoration:underline; font-family:inherit;
+  }
+
+  .progress-wrap{ margin-bottom:18px; }
+  .progress-top{ display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+  .back-btn{ font-size:12.5px; color:var(--ink-soft); background:none; border:none; padding:4px 2px; margin:-4px -2px; cursor:pointer; font-family:inherit; border-radius:6px; }
+  .back-btn:hover{ color:var(--accent-strong); }
+  .back-btn:disabled{ visibility:hidden; }
+  .progress-track{ height:6px; border-radius:999px; background:var(--track); overflow:hidden; }
+  .progress-fill{ height:100%; background:var(--accent); border-radius:999px; transition:width .3s ease; }
+  .progress-label{ font-size:12.5px; color:var(--ink-soft); }
+
+  .q-category{ font-size:12.5px; font-weight:700; color:var(--accent-strong); margin-bottom:8px; }
+  .q-text{ font-size:18px; font-weight:700; margin-bottom:18px; line-height:1.55; }
+
+  /* ---- result screen ---- */
+  .score-ring-wrap{ text-align:center; margin:4px 0 22px; }
+  .score-num{ font-size:56px; font-weight:800; color:var(--accent-strong); line-height:1; }
+  .score-sub{ font-size:14px; color:var(--ink-soft); margin-top:4px; }
+  .tier-title{ font-size:21px; font-weight:800; text-align:center; margin:6px 0 10px; }
+  .tier-desc{ font-size:14.5px; color:var(--ink-soft); text-align:center; margin:0 0 4px; }
+
+  .cat-row{ margin-bottom:14px; }
+  .cat-row:last-child{ margin-bottom:0; }
+  .cat-row-top{ display:flex; justify-content:space-between; font-size:13.5px; margin-bottom:6px; }
+  .cat-row-top .cat-name{ font-weight:700; }
+  .cat-row-top .cat-pct{ color:var(--accent-strong); font-weight:700; }
+  .cat-track{ height:8px; border-radius:999px; background:var(--track); overflow:hidden; }
+  .cat-fill{ height:100%; background:var(--accent); border-radius:999px; }
+
+  .tier-scale{ margin:26px 0 6px; }
+  .tier-scale-label{ font-size:12.5px; color:var(--ink-soft); margin-bottom:30px; text-align:center; }
+  .tier-track{ position:relative; display:flex; gap:2px; height:8px; border-radius:999px; box-shadow:0 0 0 1px var(--line); }
+  .tier-seg{ flex-grow:1; flex-basis:0; height:100%; }
+  .tier-seg:first-child{ border-top-left-radius:999px; border-bottom-left-radius:999px; }
+  .tier-seg:last-child{ border-top-right-radius:999px; border-bottom-right-radius:999px; }
+  .tier-marker{ position:absolute; top:-26px; transform:translateX(-50%); display:flex; flex-direction:column; align-items:center; }
+  .tier-marker-val{ font-size:11px; font-weight:800; color:#fff; background:var(--accent-strong); padding:2px 8px; border-radius:10px; white-space:nowrap; }
+  .tier-marker-tri{ width:0; height:0; border-left:5px solid transparent; border-right:5px solid transparent; border-top:6px solid var(--accent-strong); margin-top:1px; }
+  .tier-labels{ display:flex; gap:2px; margin-top:8px; }
+  .tier-label{ flex-grow:1; flex-basis:0; text-align:center; font-size:10.5px; line-height:1.35; color:var(--ink-soft); padding:0 1px; }
+  .tier-label-range{ display:block; font-size:9.5px; opacity:.75; margin-top:1px; }
+  .tier-label.is-current{ color:var(--accent-strong); font-weight:700; }
+
+  .tip-box{
+    background:var(--accent-soft); border-radius:16px; padding:16px 18px; margin-top:20px;
+    font-size:14px; line-height:1.75;
+  }
+  .tip-box b{ color:var(--accent-strong); }
+
+  .footer-note{
+    text-align:center; font-size:12px; color:var(--ink-soft); margin-top:26px; line-height:1.8;
+  }
+
+  .intro-illustration{ display:block; width:190px; height:auto; margin:0 auto 16px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- Intro -->
+  <div class="stage active" id="stage-intro">
+    <svg class="intro-illustration" viewBox="0 0 220 210" role="img" aria-label="一個人窩在圓滾滾的懶骨頭上，裹著毯子抱著膝蓋，旁邊放著一杯熱茶和一盆植物，頭上飄著星星和愛心，呈現一個人也很自在的單身情境">
+      <defs>
+        <radialGradient id="introBgGlow" cx="50%" cy="36%" r="68%">
+          <stop offset="0%" stop-color="var(--surface)"/>
+          <stop offset="100%" stop-color="var(--surface-2)"/>
+        </radialGradient>
+      </defs>
+      <circle cx="110" cy="105" r="103" fill="url(#introBgGlow)"/>
+      <ellipse cx="108" cy="180" rx="56" ry="8" fill="var(--ink)" opacity="0.07"/>
+      <ellipse cx="108" cy="153" rx="78" ry="37" fill="var(--accent)"/>
+      <path d="M74 150
+               C72 116 87 92 108 92
+               C129 92 144 116 142 150
+               C142 166 126 172 108 172
+               C90 172 74 166 74 150 Z"
+            fill="var(--gold)"/>
+      <path d="M86 102c6-10 15-15 22-15s16 5 22 15c-3 10-12 16-22 16s-19-6-22-16z" fill="#ece9e2"/>
+      <circle cx="98" cy="146" r="7.5" fill="#ece9e2"/>
+      <circle cx="118" cy="146" r="7.5" fill="#ece9e2"/>
+      <path d="M93 147c3 3 7 3 10 0M113 147c3 3 7 3 10 0" fill="none" stroke="#d9d4c9" stroke-width="1.4" stroke-linecap="round"/>
+      <circle cx="106" cy="73" r="27" fill="#f1c6a0"/>
+      <path d="M79 76 C 75 54 88 39 106 39 C 124 39 137 54 133 76 C 131 66 124 58 115 57 C 110 65 100 67 93 63 C 91 70 85 74 79 76 Z" fill="#2a2420"/>
+      <path d="M80 72c-3 11-2 21 5 29" fill="none" stroke="#2a2420" stroke-width="7" stroke-linecap="round"/>
+      <path d="M132 72c3 10 2 20-4 27" fill="none" stroke="#2a2420" stroke-width="7" stroke-linecap="round"/>
+      <path d="M96 74c2-2 4.4-2 6.4 0" fill="none" stroke="#5a3d2b" stroke-width="2.6" stroke-linecap="round"/>
+      <path d="M111 74c2-2 4.4-2 6.4 0" fill="none" stroke="#5a3d2b" stroke-width="2.6" stroke-linecap="round"/>
+      <path d="M99 83c3.8 3 8.2 3 12 0" fill="none" stroke="#5a3d2b" stroke-width="2.6" stroke-linecap="round"/>
+      <circle cx="92" cy="80" r="4" fill="#e0a98f" opacity="0.55"/>
+      <circle cx="120" cy="80" r="4" fill="#e0a98f" opacity="0.55"/>
+      <rect x="158" y="134" width="32" height="3.5" rx="1.75" fill="var(--ink-soft)"/>
+      <rect x="163" y="137.5" width="3.5" height="18" fill="var(--ink-soft)"/>
+      <rect x="180" y="137.5" width="3.5" height="18" fill="var(--ink-soft)"/>
+      <path d="M163 114h17v10a8.5 8.5 0 0 1-17 0z" fill="var(--surface)" stroke="var(--ink-soft)" stroke-width="1.5"/>
+      <path d="M180 117c3 0 5 2 5 5s-2 5-5 5" fill="none" stroke="var(--ink-soft)" stroke-width="1.5"/>
+      <path d="M168 108c-1-2.8 1-3.8 0-6.6M175 108c-1-2.8 1-3.8 0-6.6" stroke="var(--ink-soft)" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+      <path d="M34 154c0-5 4-9 9-9s9 4 9 9l-2 14h-14z" fill="#c2522e"/>
+      <ellipse cx="43" cy="140" rx="10" ry="12" fill="var(--accent)"/>
+      <ellipse cx="43" cy="137" rx="12.5" ry="9" fill="#4d8475"/>
+      <g fill="var(--gold)">
+        <path d="M40 40c0 6 4.5 10.5 10.5 10.5C44.5 50.5 40 55 40 61c0-6-4.5-10.5-10.5-10.5C35.5 50.5 40 46 40 40z"/>
+        <path d="M178 50c0 4.6 3.4 8 8 8-4.6 0-8 3.4-8 8 0-4.6-3.4-8-8-8 4.6 0 8-3.4 8-8z"/>
+      </g>
+      <path d="M158 34c0-4-3.2-6.8-6.8-6.8-2.2 0-4.2 1.1-5.4 2.9-1.2-1.8-3.2-2.9-5.4-2.9-3.6 0-6.8 2.8-6.8 6.8 0 6.2 7.8 10.9 12.2 14.8 4.4-3.9 12.2-8.6 12.2-14.8z" fill="var(--accent)"/>
+    </svg>
+    <div class="eyebrow">女同人格 ｜ 好玩測驗</div>
+    <h1>妳的脫單指數有多高？💘</h1>
+    <p class="lede">這份測驗從 5 個面向評估妳目前的狀態：</p>
+    <ul class="intro-list">
+      <li><span class="li-num">01</span><span class="li-label">主動出擊力</span><span class="li-desc">看到喜歡的人，妳願不願意先跨出第一步</span></li>
+      <li><span class="li-num">02</span><span class="li-label">社交圈拓展力</span><span class="li-desc">生活裡有沒有機會認識圈子以外的新朋友</span></li>
+      <li><span class="li-num">03</span><span class="li-label">自我狀態</span><span class="li-desc">現在的妳，準備好迎接新的關係了嗎</span></li>
+      <li><span class="li-num">04</span><span class="li-label">個人魅力呈現</span><span class="li-desc">平常讓別人看到的樣子（照片、自介等）吸不吸引人</span></li>
+      <li><span class="li-num">05</span><span class="li-label">行動力</span><span class="li-desc">配對成功之後，妳有沒有真的往下一步推進</span></li>
+    </ul>
+    <p class="lede lede-note">作答約 2 分鐘，結束後會看到整體指數，以及 5 個面向各自的落點，清楚知道自己卡在哪裡。結果純屬好玩，不是科學量表，不用太認真看待分數喔。</p>
+    <div class="card">
+      <button class="start-btn" id="start-btn">開始測驗</button>
+    </div>
+  </div>
+
+  <!-- Question -->
+  <div class="stage" id="stage-question">
+    <div class="progress-wrap">
+      <div class="progress-top">
+        <button class="back-btn" id="back-btn" type="button">← 上一題</button>
+        <div class="progress-label" id="progress-label"></div>
+      </div>
+      <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+    </div>
+    <div class="card">
+      <div class="q-category" id="q-category"></div>
+      <div class="q-text" id="q-text"></div>
+      <div id="q-options"></div>
+    </div>
+  </div>
+
+  <!-- Result -->
+  <div class="stage" id="stage-result">
+    <div class="eyebrow">測驗結果</div>
+    <div class="card">
+      <div class="score-ring-wrap">
+        <div class="score-num" id="result-score">0%</div>
+        <div class="score-sub">脫單指數</div>
+      </div>
+      <div class="tier-title" id="result-tier-title"></div>
+      <p class="tier-desc" id="result-tier-desc"></p>
+
+      <div class="tier-scale">
+        <div class="tier-scale-label">妳落在哪個區間</div>
+        <div class="tier-track" id="tier-track">
+          <div class="tier-seg" style="flex-grow:25; background:var(--tier1);"></div>
+          <div class="tier-seg" style="flex-grow:20; background:var(--tier2);"></div>
+          <div class="tier-seg" style="flex-grow:20; background:var(--tier3);"></div>
+          <div class="tier-seg" style="flex-grow:20; background:var(--tier4);"></div>
+          <div class="tier-seg" style="flex-grow:15; background:var(--tier5);"></div>
+          <div class="tier-marker" id="tier-marker">
+            <div class="tier-marker-val" id="tier-marker-val">0%</div>
+            <div class="tier-marker-tri"></div>
+          </div>
+        </div>
+        <div class="tier-labels" id="tier-labels">
+          <div class="tier-label" style="flex-grow:25;">單身自在派<span class="tier-label-range">0–24</span></div>
+          <div class="tier-label" style="flex-grow:20;">先把自己準備好<span class="tier-label-range">25–44</span></div>
+          <div class="tier-label" style="flex-grow:20;">穩紮穩打型<span class="tier-label-range">45–64</span></div>
+          <div class="tier-label" style="flex-grow:20;">只差臨門一腳<span class="tier-label-range">65–84</span></div>
+          <div class="tier-label" style="flex-grow:15;">行動派戀愛高手<span class="tier-label-range">85–100</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div id="cat-breakdown"></div>
+      <div class="tip-box" id="result-tip"></div>
+    </div>
+
+    <button class="primary-btn" id="retry-btn">再測一次</button>
+    <button class="secondary-btn" id="share-hint-btn">截圖分享給姐妹看看她的指數</button>
+
+    <p class="footer-note">純屬好玩，不是什麼科學量表，分數低也沒有不好，單身自在也是一種選擇 🤍<br>想認真找對象的話，歡迎來試試我們的「理想型配對」。</p>
+  </div>
+
+</div>
+
+<script>
+var QUESTIONS = [
+  { cat:"主動出擊力", text:"滑到有興趣的人，妳通常會？", options:[
+    {t:"直接按下去，管他的", s:3},
+    {t:"猶豫一下，但還是會按", s:2},
+    {t:"想很久，通常就錯過了", s:1},
+    {t:"從來不敢主動", s:0}
+  ]},
+  { cat:"主動出擊力", text:"曖昧對象已讀不回，妳會？", options:[
+    {t:"正常生活，該幹嘛幹嘛", s:3},
+    {t:"偶爾忍不住再傳一句", s:2},
+    {t:"內心小劇場演八百遍", s:1},
+    {t:"直接 emo 一整天", s:0}
+  ]},
+  { cat:"主動出擊力", text:"朋友說要幫妳牽線，妳的反應？", options:[
+    {t:"太好了，約時間", s:3},
+    {t:"好奇，但有點緊張", s:2},
+    {t:"找理由推掉", s:1},
+    {t:"直接拒絕，不想麻煩別人", s:0}
+  ]},
+  { cat:"社交圈拓展力", text:"最近一個月，妳有認識新朋友嗎（不限約會對象）？", options:[
+    {t:"常跑聚會、活動，認識一堆新朋友", s:3},
+    {t:"偶爾參加，認識個一兩個", s:2},
+    {t:"幾乎都跟老朋友混在一起", s:1},
+    {t:"下班只想回家耍廢", s:0}
+  ]},
+  { cat:"社交圈拓展力", text:"妳的交友軟體現在是什麼狀態？", options:[
+    {t:"好幾個都在用，認真經營", s:3},
+    {t:"有裝，但很少打開", s:2},
+    {t:"刪了又載、載了又刪", s:1},
+    {t:"從來沒載過", s:0}
+  ]},
+  { cat:"社交圈拓展力", text:"被朋友拉去一個不熟的聚會，妳會？", options:[
+    {t:"很期待，搞不好能認識誰", s:3},
+    {t:"去，但會一直黏著熟的朋友", s:2},
+    {t:"能推就推", s:1},
+    {t:"絕對不去", s:0}
+  ]},
+  { cat:"自我狀態", text:"想到上一段感情（如果有的話），妳現在？", options:[
+    {t:"已經放下了，偶爾想到也只是淡淡的", s:3},
+    {t:"大部分放下，但偶爾還是會卡一下", s:2},
+    {t:"還在努力走出來", s:1},
+    {t:"還沒準備好讓新的人進來", s:0}
+  ]},
+  { cat:"自我狀態", text:"妳喜歡現在的自己嗎？", options:[
+    {t:"蠻喜歡的，知道自己要什麼", s:3},
+    {t:"普通，有些地方還在調整", s:2},
+    {t:"常常對自己沒自信", s:1},
+    {t:"連自己都不太喜歡自己", s:0}
+  ]},
+  { cat:"自我狀態", text:"朋友問「妳現在準備好談戀愛了嗎」，妳會說？", options:[
+    {t:"準備好了，隨時可以開始", s:3},
+    {t:"應該可以，看緣分", s:2},
+    {t:"老實說還沒很確定", s:1},
+    {t:"一個人也過得很好，先不急", s:0}
+  ]},
+  { cat:"個人魅力呈現", text:"妳交友軟體／IG 的大頭貼是？", options:[
+    {t:"最近拍的，很像現在的自己", s:3},
+    {t:"有點舊，但還OK", s:2},
+    {t:"很久以前的照片", s:1},
+    {t:"大頭貼是動漫人物或風景", s:0}
+  ]},
+  { cat:"個人魅力呈現", text:"自我介紹欄，妳通常？", options:[
+    {t:"寫得很認真，讓人想認識我", s:3},
+    {t:"隨便寫兩句", s:2},
+    {t:"空白，想說有緣自然會聊", s:1},
+    {t:"根本沒填過", s:0}
+  ]},
+  { cat:"個人魅力呈現", text:"妳覺得身邊的人會怎麼形容妳？", options:[
+    {t:"很好聊，讓人想認識更多", s:3},
+    {t:"還不錯，但要熟了才看得出來", s:2},
+    {t:"慢熱，要花時間了解", s:1},
+    {t:"很神秘，大家都不太懂我", s:0}
+  ]},
+  { cat:"行動力", text:"配對成功之後，妳通常？", options:[
+    {t:"很快就約出來見面", s:3},
+    {t:"聊一陣子，看感覺再約", s:2},
+    {t:"聊很久但遲遲不敢約", s:1},
+    {t:"配對完就放著長草", s:0}
+  ]},
+  { cat:"行動力", text:"關於理想型的條件，妳是？", options:[
+    {t:"大方向有就好，相處感覺最重要", s:3},
+    {t:"有幾個在意的點，其他可以彈性", s:2},
+    {t:"條件列表落落長", s:1},
+    {t:"心中已經有完美形象，很難打折", s:0}
+  ]},
+  { cat:"行動力", text:"第一次約會沒有想像中來電，妳會？", options:[
+    {t:"再約一次，感覺需要時間培養", s:3},
+    {t:"看狀況，可能再聊聊", s:2},
+    {t:"大概就沒下文了", s:1},
+    {t:"直接已讀不回，不會再約", s:0}
+  ]}
+];
+
+var CATEGORY_TIPS = {
+  "主動出擊力": "妳的主動出擊力還可以再放開一點，按下去、傳出去，頂多就是沒結果，不會少一塊肉。",
+  "社交圈拓展力": "妳的生活圈可以再打開一點，緣分常常不是滑手機滑出來的，是走出門才遇到的。",
+  "自我狀態": "先把自己照顧好，感情的事不急，狀態對了，什麼時候開始都不嫌晚。",
+  "個人魅力呈現": "讓別人更容易看見真實的妳，一張新照片、一段用心的自介，都是很划算的投資。",
+  "行動力": "配對到之後，勇敢約出來見一次面，很多緣分就差在這臨門一腳。"
+};
+
+var CATEGORIES_ORDER = ["主動出擊力","社交圈拓展力","自我狀態","個人魅力呈現","行動力"];
+
+var answers = []; // {cat, score}
+var currentIndex = 0;
+
+var stageIntro = document.getElementById("stage-intro");
+var stageQuestion = document.getElementById("stage-question");
+var stageResult = document.getElementById("stage-result");
+
+function showStage(stage){
+  [stageIntro, stageQuestion, stageResult].forEach(function(s){ s.classList.remove("active"); });
+  stage.classList.add("active");
+  window.scrollTo({top:0, behavior:"instant"});
+}
+
+document.getElementById("start-btn").addEventListener("click", function(){
+  answers = [];
+  currentIndex = 0;
+  showStage(stageQuestion);
+  renderQuestion();
+});
+
+document.getElementById("retry-btn").addEventListener("click", function(){
+  answers = [];
+  currentIndex = 0;
+  showStage(stageQuestion);
+  renderQuestion();
+});
+
+document.getElementById("share-hint-btn").addEventListener("click", function(){
+  alert("把這個畫面截圖，傳給姐妹或分享到限動，讓她也來測一下吧！");
+});
+
+function renderQuestion(){
+  window.scrollTo({top:0, behavior:"instant"});
+  var q = QUESTIONS[currentIndex];
+  document.getElementById("q-category").textContent = q.cat;
+  document.getElementById("q-text").textContent = q.text;
+  document.getElementById("progress-fill").style.width = Math.round((currentIndex / QUESTIONS.length) * 100) + "%";
+  document.getElementById("progress-label").textContent = "第 " + (currentIndex + 1) + " 題／共 " + QUESTIONS.length + " 題";
+  document.getElementById("back-btn").disabled = (currentIndex === 0);
+
+  var optWrap = document.getElementById("q-options");
+  optWrap.innerHTML = "";
+  q.options.forEach(function(opt, optIndex){
+    var btn = document.createElement("button");
+    btn.className = "option-btn";
+    btn.textContent = opt.t;
+    if (answers[currentIndex] && answers[currentIndex].optIndex === optIndex) {
+      btn.classList.add("option-selected");
+    }
+    btn.addEventListener("click", function(){
+      answers[currentIndex] = { cat: q.cat, score: opt.s, optIndex: optIndex };
+      currentIndex++;
+      if (currentIndex < QUESTIONS.length) {
+        renderQuestion();
+      } else {
+        renderResult();
+      }
+    });
+    optWrap.appendChild(btn);
+  });
+}
+
+document.getElementById("back-btn").addEventListener("click", function(){
+  if (currentIndex > 0) {
+    currentIndex--;
+    renderQuestion();
+  }
+});
+
+function renderResult(){
+  var totalScore = 0, maxScore = 0;
+  var catTotals = {}, catMax = {};
+  CATEGORIES_ORDER.forEach(function(c){ catTotals[c] = 0; catMax[c] = 0; });
+
+  answers.forEach(function(a){
+    totalScore += a.score;
+    maxScore += 3;
+    catTotals[a.cat] += a.score;
+    catMax[a.cat] += 3;
+  });
+
+  var overallPct = Math.round((totalScore / maxScore) * 100);
+
+  var tier = getTier(overallPct);
+  document.getElementById("result-score").textContent = overallPct + "%";
+  document.getElementById("result-tier-title").textContent = tier.title;
+  document.getElementById("result-tier-desc").textContent = tier.desc;
+
+  // 區間量尺：把 marker 移到對應分數的位置，並把目前所在的區間標示加粗
+  var markerPos = Math.max(3, Math.min(97, overallPct));
+  var markerEl = document.getElementById("tier-marker");
+  markerEl.style.left = markerPos + "%";
+  document.getElementById("tier-marker-val").textContent = overallPct + "%";
+
+  var tierIndex = overallPct >= 85 ? 4 : overallPct >= 65 ? 3 : overallPct >= 45 ? 2 : overallPct >= 25 ? 1 : 0;
+  var labelEls = document.querySelectorAll("#tier-labels .tier-label");
+  labelEls.forEach(function(el, i){
+    el.classList.toggle("is-current", i === tierIndex);
+  });
+
+  var catPcts = {};
+  CATEGORIES_ORDER.forEach(function(c){
+    catPcts[c] = catMax[c] ? Math.round((catTotals[c] / catMax[c]) * 100) : 0;
+  });
+
+  var breakdownEl = document.getElementById("cat-breakdown");
+  breakdownEl.innerHTML = "";
+  CATEGORIES_ORDER.forEach(function(c){
+    var row = document.createElement("div");
+    row.className = "cat-row";
+    row.innerHTML =
+      "<div class='cat-row-top'><span class='cat-name'>" + c + "</span><span class='cat-pct'>" + catPcts[c] + "%</span></div>" +
+      "<div class='cat-track'><div class='cat-fill' style='width:" + catPcts[c] + "%;'></div></div>";
+    breakdownEl.appendChild(row);
+  });
+
+  // 找出分數最低的那個類別，給一句具體建議（並列最低時取第一個，維持穩定）
+  var weakestCat = CATEGORIES_ORDER[0];
+  CATEGORIES_ORDER.forEach(function(c){
+    if (catPcts[c] < catPcts[weakestCat]) weakestCat = c;
+  });
+  document.getElementById("result-tip").innerHTML =
+    "<b>最可以加強的地方：" + weakestCat + "</b><br>" + CATEGORY_TIPS[weakestCat];
+
+  showStage(stageResult);
+}
+
+function getTier(pct){
+  if (pct >= 85) return { title:"行動派戀愛高手 🔥", desc:"妳幾乎每個環節都準備好了，脫單對妳來說大概只是時間問題，放心大膽去認識人吧！" };
+  if (pct >= 65) return { title:"只差臨門一腳 ✨", desc:"大部分條件都到位了，可能卡在某個小細節，抓到那個點，很快就能更進一步。" };
+  if (pct >= 45) return { title:"穩紮穩打型 🌱", desc:"妳沒有很急，但也沒有關上門，慢慢來也很好，緣分到了自然會發生。" };
+  if (pct >= 25) return { title:"先把自己準備好 🫧", desc:"現在可能還有些心結或猶豫沒解開，不急著找人，先把自己照顧好，感情自然會跟上。" };
+  return { title:"單身自在派 🤍", desc:"妳現在的狀態比較享受自己一個人，這完全沒有不好，脫單不是必須，開心最重要。" };
+}
+</script>
+</body>
+</html>
