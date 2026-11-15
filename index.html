@@ -407,6 +407,32 @@ var CATEGORY_TIPS = {
 
 var CATEGORIES_ORDER = ["主動出擊力","社交圈拓展力","自我狀態","個人魅力呈現","行動力"];
 
+// 後台紀錄：只送分數跟時間，不收集任何可識別身份的資訊。
+// 部署後把 Apps Script 的 /exec 網址貼在這裡即可開始紀錄。
+var BACKEND_URL = "https://script.google.com/macros/s/AKfycbyzB-dzh_CVBdB38ciezr_k2qI10MBPipc702FhKeeGDoxbaGbVtZ6xaEjhlTJ89HPVXg/exec";
+
+function logResultToBackend(catPcts, overallPct, tier){
+  if (!BACKEND_URL) return;
+  try {
+    fetch(BACKEND_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({
+        initiative: catPcts["主動出擊力"],
+        social: catPcts["社交圈拓展力"],
+        selfState: catPcts["自我狀態"],
+        charm: catPcts["個人魅力呈現"],
+        action: catPcts["行動力"],
+        total: overallPct,
+        tier: tier && tier.title ? tier.title : ""
+      })
+    }).catch(function(){ /* 靜默失敗，不影響使用者體驗 */ });
+  } catch (err) {
+    /* 靜默失敗，不影響使用者體驗 */
+  }
+}
+
 var answers = []; // {cat, score}
 var currentIndex = 0;
 
@@ -530,6 +556,8 @@ function renderResult(){
   });
   document.getElementById("result-tip").innerHTML =
     "<b>最可以加強的地方：" + weakestCat + "</b><br>" + CATEGORY_TIPS[weakestCat];
+
+  logResultToBackend(catPcts, overallPct, tier);
 
   showStage(stageResult);
 }
